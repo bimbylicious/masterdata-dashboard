@@ -1052,3 +1052,156 @@ tbody td {
   font-size: 13px; /* Reduced from 14px */
 }
 
+/* Add to your existing App.css - CLEARANCE MODAL STYLES */
+
+/* ===================== CLEARANCE TYPE MODAL ===================== */
+.clearance-type-modal {
+  max-width: 550px;
+}
+
+.clearance-type-body {
+  padding: 28px 26px;
+}
+
+.clearance-type-instruction {
+  font-size: 14px;
+  color: #00224d;
+  margin-bottom: 24px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.clearance-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.clearance-type-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  background: white;
+  border: 2px solid #e0e7ff;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.clearance-type-option:hover:not(:disabled) {
+  background: #f0f7ff;
+  border-color: #0052cc;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.15);
+}
+
+.clearance-type-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clearance-type-icon {
+  font-size: 32px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.clearance-type-content {
+  flex: 1;
+}
+
+.clearance-type-content h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #00224d;
+  margin: 0 0 4px 0;
+}
+
+.clearance-type-content p {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.clearance-type-arrow {
+  font-size: 20px;
+  color: #0052cc;
+  font-weight: bold;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.clearance-type-option:hover .clearance-type-arrow {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+.clearance-generating {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f0f7ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.clearance-generating p {
+  margin: 0;
+  color: #0052cc;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ===================== CLEARANCE BUTTON ===================== */
+.btn-clearance {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-clearance:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-clearance:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===================== CLEAR FILTERS BUTTON (IMPROVED) ===================== */
+.btn-clear {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 7px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  display: inline-block;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-clear:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-clear:active {
+  transform: scale(0.98);
+}
+
