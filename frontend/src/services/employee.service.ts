@@ -36,6 +36,10 @@ export class EmployeeService {
     return await this.api.uploadFile('/employees/import', file);
   }
 
+  async updateDatabase(file: File) {
+    return await this.api.uploadFile('/employees/update', file);
+  }
+
   async exportExcel(): Promise<void> {
     const blob = await this.api.downloadFile('/employees/export');
     const url = window.URL.createObjectURL(blob);

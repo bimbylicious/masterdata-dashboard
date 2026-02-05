@@ -132,55 +132,92 @@ export class ExcelService {
   }
 
   exportToExcel(employees: Employee[]): Buffer {
-    const excelData = employees.map(emp => ({
-      'NO': emp.no,
-      'YEAR': emp.year,
-      'MONTH CLEARED': emp.monthCleared || '',
-      'ID NUMBER': emp.idNumber,
-      'LAST NAME': emp.lastName,
-      'FIRST NAME': emp.firstName,
-      'MIDDLE NAME': emp.middleName || '',
-      'GENDER': '',
-      'MARITAL STATUS': '',
-      'POSITION': emp.position,
-      'MT': '',
-      'PROJECT/DEPARTMENT': emp.projectDepartment,
-      'REGION': emp.region,
-      'SECTOR': emp.sector,
-      'RANK': emp.rank,
-      'BIRTHDAY': '',
-      'AGE (UPON RESIGNATION)': '',
-      'EMPLOYMENT STATUS': emp.employmentStatus,
-      'EFFECTIVE DATE OF RESIGNATION': emp.effectiveDateOfResignation || ''
-    }));
+    try {
+      console.log(`📤 Exporting ${employees.length} employees to Excel...`);
+      
+      // Helper to safely format dates
+      const formatDate = (date: any): string => {
+        if (!date) return '';
+        if (typeof date === 'string') return date;
+        if (date instanceof Date) {
+          return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        }
+        return '';
+      };
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    
-    // Set column widths for better readability
-    worksheet['!cols'] = [
-      { wch: 5 },   // NO
-      { wch: 6 },   // YEAR
-      { wch: 15 },  // MONTH CLEARED
-      { wch: 12 },  // ID NUMBER
-      { wch: 20 },  // LAST NAME
-      { wch: 20 },  // FIRST NAME
-      { wch: 20 },  // MIDDLE NAME
-      { wch: 10 },  // GENDER
-      { wch: 15 },  // MARITAL STATUS
-      { wch: 30 },  // POSITION
-      { wch: 5 },   // MT
-      { wch: 30 },  // PROJECT/DEPARTMENT
-      { wch: 15 },  // REGION
-      { wch: 25 },  // SECTOR
-      { wch: 15 },  // RANK
-      { wch: 12 },  // BIRTHDAY
-      { wch: 8 },   // AGE
-      { wch: 20 },  // EMPLOYMENT STATUS
-      { wch: 20 }   // EFFECTIVE DATE
-    ];
+      // Helper to ensure values are strings or numbers (not Date objects)
+      const safeValue = (value: any): string | number => {
+        if (value === null || value === undefined) return '';
+        if (value instanceof Date) return formatDate(value);
+        if (typeof value === 'number') return value;
+        return String(value);
+      };
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
-    return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      const excelData = employees.map(emp => ({
+        'NO': safeValue(emp.no),
+        'YEAR': safeValue(emp.year),
+        'MONTH CLEARED': safeValue(emp.monthCleared),
+        'ID NUMBER': safeValue(emp.idNumber),
+        'LAST NAME': safeValue(emp.lastName),
+        'FIRST NAME': safeValue(emp.firstName),
+        'MIDDLE NAME': safeValue(emp.middleName),
+        'GENDER': '',
+        'MARITAL STATUS': '',
+        'POSITION': safeValue(emp.position),
+        'MT': '',
+        'PROJECT/DEPARTMENT': safeValue(emp.projectDepartment),
+        'REGION': safeValue(emp.region),
+        'SECTOR': safeValue(emp.sector),
+        'RANK': safeValue(emp.rank),
+        'BIRTHDAY': '',
+        'AGE (UPON RESIGNATION)': '',
+        'EMPLOYMENT STATUS': safeValue(emp.employmentStatus),
+        'EFFECTIVE DATE OF RESIGNATION': formatDate(emp.effectiveDateOfResignation)
+      }));
+
+      console.log(`📊 Creating worksheet with ${excelData.length} rows...`);
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      
+      // Set column widths for better readability
+      worksheet['!cols'] = [
+        { wch: 5 },   // NO
+        { wch: 6 },   // YEAR
+        { wch: 15 },  // MONTH CLEARED
+        { wch: 12 },  // ID NUMBER
+        { wch: 20 },  // LAST NAME
+        { wch: 20 },  // FIRST NAME
+        { wch: 20 },  // MIDDLE NAME
+        { wch: 10 },  // GENDER
+        { wch: 15 },  // MARITAL STATUS
+        { wch: 30 },  // POSITION
+        { wch: 5 },   // MT
+        { wch: 30 },  // PROJECT/DEPARTMENT
+        { wch: 15 },  // REGION
+        { wch: 25 },  // SECTOR
+        { wch: 15 },  // RANK
+        { wch: 12 },  // BIRTHDAY
+        { wch: 8 },   // AGE
+        { wch: 20 },  // EMPLOYMENT STATUS
+        { wch: 20 }   // EFFECTIVE DATE
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
+      
+      console.log(`💾 Writing Excel buffer...`);
+      const buffer = XLSX.write(workbook, { 
+        type: 'buffer', 
+        bookType: 'xlsx',
+        compression: true
+      });
+      
+      console.log(`✅ Excel file created successfully (${buffer.length} bytes)`);
+      return buffer;
+      
+    } catch (error: any) {
+      console.error('❌ Error creating Excel file:', error);
+      console.error('Stack trace:', error.stack);
+      throw new Error(`Excel export failed: ${error.message}`);
+    }
   }
 }

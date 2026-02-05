@@ -109,6 +109,29 @@ export class EmployeeController {
     }
   }
 
+  async updateExcel(req: AuthRequest, res: Response) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: { code: 'NO_FILE', message: 'No file uploaded' } });
+      }
+      console.log(`🔄 Updating database from Excel file: ${req.file.originalname} (${req.file.size} bytes)`);
+      const result = await this.service.updateFromExcel(req.file.buffer);
+      console.log('✅ Excel update completed successfully');
+      res.json({ success: true, data: result });
+    } catch (error: any) {
+      console.error('❌ Error in updateExcel:', error);
+      console.error('Stack trace:', error.stack);
+      res.status(500).json({ 
+        success: false, 
+        error: { 
+          code: 'UPDATE_ERROR', 
+          message: error.message,
+          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        } 
+      });
+    }
+  }
+
   async downloadExcel(req: AuthRequest, res: Response) {
     try {
       const buffer = await this.service.exportToExcel();

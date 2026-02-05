@@ -93,6 +93,18 @@ export function useEmployees() {
     }
   };
 
+  const updateDatabase = async (file: File) => {
+    setLoading(true);
+    try {
+      await serviceRef.current.updateDatabase(file);
+      await fetchAllEmployees(); // re-fetch everything after update
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const exportExcel = async () => {
     await serviceRef.current.exportExcel();
   };
@@ -119,6 +131,7 @@ export function useEmployees() {
     refresh: fetchAllEmployees,
     fetchEmployeeById,
     importExcel,
+    updateDatabase,
     exportExcel,
     clearSelectedEmployee: () => setSelectedEmployee(null)
   };

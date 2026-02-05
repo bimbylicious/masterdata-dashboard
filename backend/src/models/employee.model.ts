@@ -82,9 +82,10 @@ export class EmployeeModel {
     // Apply sorting
     if (sort) {
       const direction = sort.direction === 'asc' ? 'ASC' : 'DESC';
-      // Convert camelCase to snake_case for database columns
       const field = this.toSnakeCase(sort.field);
       query += ` ORDER BY ${field} ${direction}`;
+    } else {
+      query += ` ORDER BY created_at ASC, id ASC`;
     }
 
     const result = await pool.query(query, params);
@@ -101,7 +102,6 @@ export class EmployeeModel {
       return null;
     }
 
-    // Convert snake_case to camelCase
     return this.rowToEmployee(result.rows[0]);
   }
 
@@ -132,7 +132,6 @@ export class EmployeeModel {
     const values: any[] = [];
     let paramIndex = 1;
 
-    // Build SET clause dynamically
     Object.entries(data).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
         fields.push(`${this.toSnakeCase(key)} = $${paramIndex}`);
@@ -168,81 +167,256 @@ export class EmployeeModel {
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
-  async bulkCreate(employees: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<{ created: Employee[], skipped: string[], duplicates: Array<{ idNumber: string; fullName: string }> }> {
+  /**
+   * 📥 IMPORT: REPLACE ALL DATA
+   * 1. Check for duplicates WITHIN Excel file only
+   * 2. Delete ALL existing data from database
+   * 3. Insert all unique records from Excel
+   */
+  async bulkCreate(employees: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<{ 
+    created: Employee[], 
+    skipped: string[], 
+    duplicates: Array<{ idNumber: string; fullName: string }> 
+  }> {
     const created: Employee[] = [];
     const skipped: string[] = [];
     const duplicates: Array<{ idNumber: string; fullName: string }> = [];
-    let successCount = 0;
-    let skipCount = 0;
     
-    // Process each employee individually (no transaction)
-    // This way, if one fails, others can still succeed
-    for (let i = 0; i < employees.length; i++) {
-      const emp = employees[i];
-      const id = Date.now().toString() + i.toString() + Math.random().toString(36).slice(2);
-      
-      try {
-        // Insert without wrapping in a transaction
-        // Each insert is autocommit
-        const result = await pool.query(
-          `INSERT INTO employees (
-            id, no, year, month_cleared, id_number, last_name, first_name,
-            middle_name, position, project_department, region, sector, rank,
-            employment_status, effective_date_of_resignation, full_name, role, status
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-          RETURNING *`,
-          [
-            id, emp.no, emp.year, emp.monthCleared, emp.idNumber,
-            emp.lastName, emp.firstName, emp.middleName, emp.position,
-            emp.projectDepartment, emp.region, emp.sector, emp.rank,
-            emp.employmentStatus, emp.effectiveDateOfResignation,
-            emp.fullName, emp.role, emp.status
-          ]
-        );
-
-        created.push(this.rowToEmployee(result.rows[0]));
-        successCount++;
-
-        // Show progress for large imports
-        if ((successCount + skipCount) % 50 === 0) {
-          console.log(`   📍 Progress: ${successCount + skipCount}/${employees.length} processed...`);
-        }
-      } catch (error: any) {
-        // Check if it's a duplicate key error
-        if (error.code === '23505' && error.constraint === 'employees_id_number_key') {
-          console.log(`⚠️  Skipping duplicate ID: ${emp.idNumber} (${emp.fullName})`);
-          duplicates.push({ idNumber: emp.idNumber, fullName: emp.fullName });
-          skipped.push(emp.idNumber);
-          skipCount++;
-        } else {
-          // Log other errors but continue
-          console.error(`❌ Error inserting ${emp.idNumber} (${emp.fullName}):`, error.message);
-          skipCount++;
-        }
+    console.log(`\n📥 IMPORT MODE - REPLACE ALL DATA`);
+    console.log(`⚠️  This will DELETE all existing employees and replace with Excel data`);
+    
+    // Step 1: Check for duplicates WITHIN Excel only
+    const idNumberMap = new Map<string, number>();
+    const internalDuplicates: Array<{ idNumber: string; fullName: string }> = [];
+    
+    employees.forEach((emp, index) => {
+      if (idNumberMap.has(emp.idNumber)) {
+        internalDuplicates.push({ idNumber: emp.idNumber, fullName: emp.fullName });
+      } else {
+        idNumberMap.set(emp.idNumber, index);
       }
-    }
-
-    console.log(`\n📊 Import Summary:`);
-    console.log(`   ✅ Created: ${created.length} employees`);
-    console.log(`   ⚠️  Skipped: ${skipped.length} records`);
-    if (duplicates.length > 0) {
-      console.log(`   📋 Duplicate ID Numbers:`);
-      duplicates.slice(0, 5).forEach(dup => {
+    });
+    
+    // Keep only first occurrence of each ID
+    const uniqueEmployees = employees.filter((emp, index) => {
+      return idNumberMap.get(emp.idNumber) === index;
+    });
+    
+    console.log(`📊 Excel File Analysis:`);
+    console.log(`   📄 Total rows in Excel: ${employees.length}`);
+    console.log(`   🔍 Unique ID numbers: ${uniqueEmployees.length}`);
+    if (internalDuplicates.length > 0) {
+      console.log(`   ⚠️  Duplicate IDs in Excel (will keep first): ${internalDuplicates.length}`);
+      internalDuplicates.slice(0, 5).forEach(dup => {
         console.log(`      - ${dup.idNumber} (${dup.fullName})`);
       });
-      if (duplicates.length > 5) {
-        console.log(`      ... and ${duplicates.length - 5} more`);
+      if (internalDuplicates.length > 5) {
+        console.log(`      ... and ${internalDuplicates.length - 5} more`);
       }
+    }
+    
+    // Step 2: DELETE ALL existing data
+    try {
+      const deleteResult = await pool.query('SELECT COUNT(*) FROM employees');
+      const oldCount = parseInt(deleteResult.rows[0].count);
+      
+      console.log(`\n🗑️  Deleting ${oldCount} existing employees from database...`);
+      await pool.query('DELETE FROM employees');
+      console.log(`✅ Database cleared`);
+      
+      // Step 3: Insert all unique employees from Excel
+      console.log(`\n💾 Inserting ${uniqueEmployees.length} employees from Excel...`);
+      
+      for (let i = 0; i < uniqueEmployees.length; i++) {
+        const emp = uniqueEmployees[i];
+        const id = Date.now().toString() + i.toString() + Math.random().toString(36).slice(2);
+        
+        try {
+          const result = await pool.query(
+            `INSERT INTO employees (
+              id, no, year, month_cleared, id_number, last_name, first_name,
+              middle_name, position, project_department, region, sector, rank,
+              employment_status, effective_date_of_resignation, full_name, role, status
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            RETURNING *`,
+            [
+              id, emp.no, emp.year, emp.monthCleared, emp.idNumber,
+              emp.lastName, emp.firstName, emp.middleName, emp.position,
+              emp.projectDepartment, emp.region, emp.sector, emp.rank,
+              emp.employmentStatus, emp.effectiveDateOfResignation,
+              emp.fullName, emp.role, emp.status
+            ]
+          );
+
+          created.push(this.rowToEmployee(result.rows[0]));
+
+          if (created.length % 50 === 0) {
+            console.log(`   ⏳ Progress: ${created.length}/${uniqueEmployees.length} inserted...`);
+          }
+        } catch (error: any) {
+          console.error(`❌ Error inserting ${emp.idNumber} (${emp.fullName}):`, error.message);
+          skipped.push(emp.idNumber);
+        }
+      }
+
+      // Add internal duplicates to the duplicates list for reporting
+      internalDuplicates.forEach(dup => {
+        duplicates.push(dup);
+        skipped.push(dup.idNumber);
+      });
+
+      console.log(`\n✅ Import Complete - Database Replaced:`);
+      console.log(`   🗑️  Deleted: ${oldCount} old employees`);
+      console.log(`   ✅ Inserted: ${created.length} new employees`);
+      if (internalDuplicates.length > 0) {
+        console.log(`   ⏭️  Skipped (Excel duplicates): ${internalDuplicates.length}`);
+      }
+      if (skipped.length - internalDuplicates.length > 0) {
+        console.log(`   ❌ Errors: ${skipped.length - internalDuplicates.length}`);
+      }
+
+    } catch (error: any) {
+      console.error('❌ IMPORT FAILED:', error.message);
+      throw error;
     }
 
     return { created, skipped, duplicates };
+  }
+
+  /**
+   * 🔄 UPDATE: SYNC DATABASE WITH EXCEL
+   * 1. Check for duplicates WITHIN Excel file only
+   * 2. Update existing records (match by ID number)
+   * 3. Insert new records
+   * 4. PRESERVE records in database that are not in Excel
+   */
+  async updateOrCreate(employees: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<{ 
+    updated: Employee[], 
+    inserted: Employee[], 
+    skipped: string[] 
+  }> {
+    const updated: Employee[] = [];
+    const inserted: Employee[] = [];
+    const skipped: string[] = [];
+    
+    console.log(`\n🔄 UPDATE MODE - SYNC WITH EXCEL`);
+    console.log(`💾 Records in database but not in Excel will be PRESERVED`);
+    
+    // Step 1: Check for duplicates WITHIN Excel
+    const idNumberMap = new Map<string, number>();
+    const internalDuplicates = new Set<string>();
+    
+    employees.forEach((emp, index) => {
+      if (idNumberMap.has(emp.idNumber)) {
+        internalDuplicates.add(emp.idNumber);
+      } else {
+        idNumberMap.set(emp.idNumber, index);
+      }
+    });
+    
+    const uniqueEmployees = employees.filter((emp, index) => {
+      return idNumberMap.get(emp.idNumber) === index;
+    });
+    
+    if (internalDuplicates.size > 0) {
+      console.log(`⚠️  Found ${internalDuplicates.size} duplicate IDs in Excel (keeping first occurrence)`);
+    }
+    
+    console.log(`📊 Processing ${uniqueEmployees.length} unique records from Excel...`);
+    
+    // Step 2: Update or Insert each unique employee
+    for (let i = 0; i < uniqueEmployees.length; i++) {
+      const emp = uniqueEmployees[i];
+      
+      try {
+        // Check if employee exists in database
+        const existing = await pool.query(
+          'SELECT id FROM employees WHERE id_number = $1',
+          [emp.idNumber]
+        );
+
+        if (existing.rows.length > 0) {
+          // UPDATE existing employee
+          const existingId = existing.rows[0].id;
+          
+          const result = await pool.query(
+            `UPDATE employees SET
+              no = $1, year = $2, month_cleared = $3,
+              last_name = $4, first_name = $5, middle_name = $6,
+              position = $7, project_department = $8, region = $9,
+              sector = $10, rank = $11, employment_status = $12,
+              effective_date_of_resignation = $13, full_name = $14,
+              status = $15, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $16
+            RETURNING *`,
+            [
+              emp.no, emp.year, emp.monthCleared,
+              emp.lastName, emp.firstName, emp.middleName,
+              emp.position, emp.projectDepartment, emp.region,
+              emp.sector, emp.rank, emp.employmentStatus,
+              emp.effectiveDateOfResignation, emp.fullName, emp.status,
+              existingId
+            ]
+          );
+
+          updated.push(this.rowToEmployee(result.rows[0]));
+          
+          if (updated.length % 20 === 0) {
+            console.log(`   🔄 Updated: ${updated.length}...`);
+          }
+        } else {
+          // INSERT new employee
+          const id = Date.now().toString() + i.toString() + Math.random().toString(36).slice(2);
+          
+          const result = await pool.query(
+            `INSERT INTO employees (
+              id, no, year, month_cleared, id_number, last_name, first_name,
+              middle_name, position, project_department, region, sector, rank,
+              employment_status, effective_date_of_resignation, full_name, role, status
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            RETURNING *`,
+            [
+              id, emp.no, emp.year, emp.monthCleared, emp.idNumber,
+              emp.lastName, emp.firstName, emp.middleName, emp.position,
+              emp.projectDepartment, emp.region, emp.sector, emp.rank,
+              emp.employmentStatus, emp.effectiveDateOfResignation,
+              emp.fullName, emp.role, emp.status
+            ]
+          );
+
+          inserted.push(this.rowToEmployee(result.rows[0]));
+          
+          if (inserted.length % 20 === 0) {
+            console.log(`   ➕ Inserted: ${inserted.length}...`);
+          }
+        }
+
+      } catch (error: any) {
+        console.error(`❌ Error processing ${emp.idNumber} (${emp.fullName}):`, error.message);
+        skipped.push(emp.idNumber);
+      }
+    }
+
+    // Get total count in database after update
+    const totalResult = await pool.query('SELECT COUNT(*) FROM employees');
+    const totalInDb = parseInt(totalResult.rows[0].count);
+
+    console.log(`\n✅ Update Complete - Database Synced:`);
+    console.log(`   🔄 Updated: ${updated.length} existing employees`);
+    console.log(`   ➕ Inserted: ${inserted.length} new employees`);
+    if (skipped.length > 0) {
+      console.log(`   ❌ Errors: ${skipped.length}`);
+    }
+    console.log(`   💾 Total in database: ${totalInDb} employees`);
+    console.log(`   ℹ️  Records not in Excel: ${totalInDb - updated.length - inserted.length} (preserved)`);
+
+    return { updated, inserted, skipped };
   }
 
   async search(query: string): Promise<EmployeeSummary[]> {
     return this.findAll({ search: query });
   }
 
-  // Helper: Convert database row to Employee object
   private rowToEmployee(row: any): Employee {
     return {
       id: row.id,
@@ -268,7 +442,6 @@ export class EmployeeModel {
     };
   }
 
-  // Helper: Convert database row to EmployeeSummary
   private rowToSummary(row: any): EmployeeSummary {
     return {
       id: row.id,
@@ -285,7 +458,6 @@ export class EmployeeModel {
     };
   }
 
-  // Helper: Convert camelCase to snake_case
   private toSnakeCase(str: string): string {
     return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
   }

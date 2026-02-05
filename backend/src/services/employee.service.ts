@@ -55,7 +55,7 @@ export class EmployeeService {
       const employees = rows.map((row: ExcelEmployeeRow) =>
         this.excelService.transformExcelRowToEmployee(row)
       );
-      console.log(`🔄 Transformed ${employees.length} employees`);
+      console.log(`📄 Transformed ${employees.length} employees`);
 
       console.log('💾 Starting bulk insert into database...');
       const result = await this.model.bulkCreate(employees);
@@ -89,6 +89,46 @@ export class EmployeeService {
     } catch (error: any) {
       console.error('❌ EXPORT ERROR:', error);
       throw new Error(`Excel export failed: ${error.message}`);
+    }
+  }
+
+  async updateFromExcel(buffer: Buffer) {
+    try {
+      console.log('🔄 Starting Excel update/sync...');
+      
+      const rows = this.excelService.parseExcelFile(buffer);
+      console.log(`📊 Parsed ${rows.length} rows from Excel`);
+      
+      const validation = this.excelService.validateRows(rows);
+      console.log('✅ Validation result:', validation);
+
+      if (!validation.success) {
+        console.log('❌ Validation failed:', validation.errors);
+        return validation;
+      }
+
+      const employees = rows.map((row: ExcelEmployeeRow) =>
+        this.excelService.transformExcelRowToEmployee(row)
+      );
+      console.log(`🔄 Transformed ${employees.length} employees`);
+
+      console.log('💾 Starting update/insert into database...');
+      const result = await this.model.updateOrCreate(employees);
+      
+      console.log(`✅ Successfully processed update!`);
+      
+      return {
+        success: true,
+        totalRows: rows.length,
+        updatedRows: result.updated.length,
+        insertedRows: result.inserted.length,
+        skippedRows: result.skipped.length,
+        errors: []
+      };
+    } catch (error: any) {
+      console.error('❌ UPDATE ERROR:', error);
+      console.error('Stack trace:', error.stack);
+      throw new Error(`Excel update failed: ${error.message}`);
     }
   }
   

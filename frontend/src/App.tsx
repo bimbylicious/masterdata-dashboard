@@ -19,6 +19,7 @@ function App() {
     loading,
     error,
     importExcel,
+    updateDatabase,
     exportExcel,
     fetchEmployeeById,
     clearSelectedEmployee,
@@ -44,11 +45,20 @@ function App() {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       addToast('info', `📥 Importing ${file.name}...`);
       importExcel(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleFileUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      addToast('info', `🔄 Updating database from ${file.name}...`);
+      updateDatabase(file);
     }
     e.target.value = '';
   };
@@ -87,9 +97,13 @@ function App() {
         </div>
         {userRole === 'admin' && (
           <div className="header-actions">
-            <label className="btn btn-primary upload-btn" title="Import employees from Excel file">
+            <label className="btn btn-primary upload-btn" title="Import new employees from Excel (skips duplicates)">
               📥 Import Excel
-              <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} hidden />
+              <input type="file" accept=".xlsx,.xls" onChange={handleFileImport} hidden />
+            </label>
+            <label className="btn btn-update upload-btn" title="Update existing employees and add new ones from Excel (keeps records not in file)">
+              🔄 Update Database
+              <input type="file" accept=".xlsx,.xls" onChange={handleFileUpdate} hidden />
             </label>
             <button className="btn btn-secondary" onClick={handleExport} title="Export all employees to Excel">
               📤 Export Excel
@@ -144,7 +158,7 @@ function App() {
           <div className="table-container">
             {employees.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">📭</div>
+                <div className="empty-icon">🔭</div>
                 <h3>No Employees Found</h3>
                 <p>Try adjusting your filters or import an Excel file to get started.</p>
               </div>

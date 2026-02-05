@@ -190,6 +190,18 @@ body {
   gap: 6px;
 }
 
+.btn-update {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-update:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
+}
+
 /* ===================== MAIN ===================== */
 .app-main {
   flex: 1;
@@ -376,7 +388,7 @@ thead {
 
 thead th {
   text-align: left;
-  padding: 16px 14px;
+  padding: 16px 10px;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -899,3 +911,144 @@ tbody td {
 .app-footer p {
   margin: 0;
 }
+
+/* ===================== ULTRA-COMPACT VERSION ===================== */
+/* Use this if you want everything REALLY compact */
+
+/* Minimal header */
+.app-header {
+  padding: 10px 24px;
+}
+
+.app-logo {
+  font-size: 20px;
+  animation: none; /* Remove bounce animation */
+}
+
+.header-left {
+  gap: 12px;
+}
+
+.header-left h1 {
+  font-size: 18px;
+}
+
+.app-tagline {
+  display: none; /* Hide tagline to save space */
+}
+
+.role-badge {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+/* Minimal main section */
+.app-main {
+  padding: 16px 24px;
+  gap: 12px;
+}
+
+/* Minimal stats bar */
+.stats-bar {
+  grid-template-columns: repeat(4, 1fr); /* Force 4 columns */
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.stat-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border-left-width: 3px;
+}
+
+.stat-label {
+  font-size: 9px;
+  margin-bottom: 3px;
+  letter-spacing: 0.3px;
+}
+
+.stat-value {
+  font-size: 20px;
+}
+
+/* Minimal filters */
+.filters-container {
+  padding: 1px 16px;
+  border-radius: 6px;
+}
+
+.filters-row {
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.filter-group {
+  gap: 3px;
+}
+
+.filter-group label {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 6px 8px;
+  font-size: 12px;
+  border-width: 1px;
+  border-radius: 6px;
+}
+
+.filter-group.search-group {
+  margin-bottom: 4px;
+}
+
+.filters-row.filters-actions {
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.btn-clear {
+  padding: 6px 12px;
+  font-size: 11px;
+  border-width: 1px;
+}
+
+/* Minimal buttons */
+.btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.header-actions {
+  gap: 8px;
+}
+
+/* Remove all hover transforms */
+.stat-item:hover,
+.filters-container:hover,
+.table-container:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 34, 77, 0.08);
+}
+
+.btn:hover::before {
+  display: none; /* Remove ripple effect */
+}
+
+/* Compact table */
+.table-container {
+  border-radius: 6px;
+}
+
+thead th {
+  padding: 12px 10px; /* Reduced from 16px 14px */
+  font-size: 11px; /* Reduced from 12px */
+}
+
+tbody td {
+  padding: 10px 12px; /* Reduced from 14px 18px */
+  font-size: 13px; /* Reduced from 14px */
+}
+
