@@ -1,18 +1,22 @@
 export interface ExcelEmployeeRow {
-  NO: number;
-  YEAR: number;
-  'MONTH CLEARED'?: string;
-  'ID NUMBER': string;
-  'LAST NAME': string;
+  EMPCODE: string;
   'FIRST NAME': string;
   'MIDDLE NAME'?: string;
-  POSITION: string;
-  'PROJECT/DEPARTMENT': string;
-  REGION: string;
-  SECTOR: string;
+  'LAST NAME': string;
+  'CBE/NonCBE'?: string;
   RANK: string;
-  'EMPLOYMENT STATUS': string;
-  'EFFECTIVE DATE OF RESIGNATION'?: string | Date;
+  'EMP STATUS': string;
+  POSITION: string;
+  COSTCODE?: string;
+  'PROJ NAME': string;
+  'PROJ HR'?: string;
+  'EMAIL ADDRESS'?: string;
+  'MOBILE ASSIGNMENT'?: string;
+  'MOBILE NUMBER'?: string;
+  'LAPTOP ASSIGNMENT'?: string;
+  'ASSET CODE'?: string;
+  'OTHERS\n(Specify items assigned)'?: string;
+  REMARKS?: string;
 }
 
 export interface ExcelError {

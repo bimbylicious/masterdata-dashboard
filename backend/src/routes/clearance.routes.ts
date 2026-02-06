@@ -8,7 +8,7 @@ const controller = new ClearanceController();
 router.use(authenticate);
 
 // Generate clearance form for a specific employee
-router.get('/:employeeId', hasPermission('employees', 'read'), (req, res) => 
+router.get('/:empcode', hasPermission('employees', 'read'), (req, res) => 
   controller.generateClearanceForm(req, res)
 );
 

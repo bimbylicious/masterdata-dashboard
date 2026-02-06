@@ -12,22 +12,15 @@ export class ClearanceController {
     this.employeeService = new EmployeeService();
   }
 
-  /**
-   * Generate a clearance form for a specific employee
-   * GET /api/clearance/:employeeId?type=project-hire|contractual
-   */
   async generateClearanceForm(req: AuthRequest, res: Response) {
     try {
-      // Safely extract employeeId as string (fix TypeScript error)
-      const employeeId = Array.isArray(req.params.employeeId) 
-        ? req.params.employeeId[0] 
-        : req.params.employeeId;
+      const empcode = Array.isArray(req.params.empcode) 
+        ? req.params.empcode[0] 
+        : req.params.empcode;
       
-      // Safely extract clearance type from query params
       const typeParam = Array.isArray(req.query.type) ? req.query.type[0] : req.query.type;
       const clearanceType = typeParam as 'project-hire' | 'contractual';
 
-      // Validate clearance type
       if (!clearanceType || !['project-hire', 'contractual'].includes(clearanceType)) {
         return res.status(400).json({
           success: false,
@@ -38,10 +31,9 @@ export class ClearanceController {
         });
       }
 
-      console.log(`📄 Generating ${clearanceType} clearance form for employee ID: ${employeeId}`);
+      console.log(`📄 Generating ${clearanceType} clearance form for employee: ${empcode}`);
 
-      // Fetch employee data
-      const employee = await this.employeeService.getEmployeeById(employeeId, req.user!.role);
+      const employee = await this.employeeService.getEmployeeById(empcode, req.user!.role);
 
       if (!employee) {
         return res.status(404).json({
@@ -50,15 +42,13 @@ export class ClearanceController {
         });
       }
 
-      // Generate the clearance PDF
       const pdfBuffer = await this.pdfService.fillClearanceForm({
         employeeName: employee.fullName,
         position: employee.position,
-        department: employee.projectDepartment,
+        department: employee.projName,
         clearanceType: clearanceType
       });
 
-      // NEW: Filename is now "Clearance_Form_LastName.pdf"
       const filename = `Clearance_Form_${employee.lastName}.pdf`;
       
       res.setHeader('Content-Type', 'application/pdf');

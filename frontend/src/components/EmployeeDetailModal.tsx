@@ -9,7 +9,7 @@ interface Props {
   userRole: 'admin' | 'employee';
   onClose: () => void;
   onUpdate?: (updatedEmployee: Employee) => void;
-  onDelete?: (employeeId: string) => void;
+  onDelete?: (empcode: string) => void;
 }
 
 export const EmployeeDetailModal: React.FC<Props> = ({ 
@@ -29,21 +29,27 @@ export const EmployeeDetailModal: React.FC<Props> = ({
     firstName: employee.firstName,
     lastName: employee.lastName,
     middleName: employee.middleName || '',
-    position: employee.position,
-    projectDepartment: employee.projectDepartment,
-    region: employee.region,
-    sector: employee.sector,
+    cbeNoncbe: employee.cbeNoncbe || '',
     rank: employee.rank,
-    employmentStatus: employee.employmentStatus,
-    monthCleared: employee.monthCleared || '',
-    status: employee.status,
-    effectiveDateOfResignation: employee.effectiveDateOfResignation || ''
+    empStatus: employee.empStatus,
+    position: employee.position,
+    costcode: employee.costcode || '',
+    projName: employee.projName,
+    projHr: employee.projHr || '',
+    emailAddress: employee.emailAddress || '',
+    mobileAssignment: employee.mobileAssignment || '',
+    mobileNumber: employee.mobileNumber || '',
+    laptopAssignment: employee.laptopAssignment || '',
+    assetCode: employee.assetCode || '',
+    others: employee.others || '',
+    remarks: employee.remarks || '',
+    status: employee.status
   });
 
   const service = new EmployeeService();
   const clearanceService = new ClearanceService();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -56,7 +62,6 @@ export const EmployeeDetailModal: React.FC<Props> = ({
     setError(null);
     
     try {
-      // Build fullName from name parts
       const nameParts = [
         formData.firstName,
         formData.middleName,
@@ -68,26 +73,31 @@ export const EmployeeDetailModal: React.FC<Props> = ({
         firstName: formData.firstName,
         lastName: formData.lastName,
         middleName: formData.middleName || undefined,
-        position: formData.position,
-        projectDepartment: formData.projectDepartment,
-        region: formData.region,
-        sector: formData.sector,
+        fullName: fullName,
+        cbeNoncbe: formData.cbeNoncbe || undefined,
         rank: formData.rank,
-        employmentStatus: formData.employmentStatus,
-        monthCleared: formData.monthCleared || undefined,
-        status: formData.status as 'active' | 'inactive',
-        effectiveDateOfResignation: formData.effectiveDateOfResignation || undefined,
-        fullName: fullName
+        empStatus: formData.empStatus,
+        position: formData.position,
+        costcode: formData.costcode || undefined,
+        projName: formData.projName,
+        projHr: formData.projHr || undefined,
+        emailAddress: formData.emailAddress || undefined,
+        mobileAssignment: formData.mobileAssignment || undefined,
+        mobileNumber: formData.mobileNumber || undefined,
+        laptopAssignment: formData.laptopAssignment || undefined,
+        assetCode: formData.assetCode || undefined,
+        others: formData.others || undefined,
+        remarks: formData.remarks || undefined,
+        status: formData.status as 'active' | 'inactive'
       };
 
-      const updatedEmployee = await service.updateEmployee(employee.id, updatedData);
+      const updatedEmployee = await service.updateEmployee(employee.empcode, updatedData);
       setIsEditing(false);
       
       if (onUpdate) {
         onUpdate(updatedEmployee);
       }
       
-      // Auto-close after successful save
       setTimeout(() => onClose(), 500);
     } catch (err: any) {
       setError(err.message || 'Failed to save changes');
@@ -106,10 +116,10 @@ export const EmployeeDetailModal: React.FC<Props> = ({
     setError(null);
     
     try {
-      await service.deleteEmployee(employee.id);
+      await service.deleteEmployee(employee.empcode);
       
       if (onDelete) {
-        onDelete(employee.id);
+        onDelete(employee.empcode);
       }
       
       onClose();
@@ -130,14 +140,9 @@ export const EmployeeDetailModal: React.FC<Props> = ({
     setError(null);
 
     try {
-      await clearanceService.generateClearanceForm(employee.id, type);
+      await clearanceService.generateClearanceForm(employee.empcode, type);
       console.log(`✅ ${type} clearance form generated successfully`);
-      
-      // Close the type selection modal
       setShowClearanceTypeModal(false);
-      
-      // Optionally close the main modal after successful generation
-      // setTimeout(() => onClose(), 1000);
     } catch (err: any) {
       setError(err.message || 'Failed to generate clearance form');
       console.error('Clearance generation error:', err);
@@ -156,15 +161,21 @@ export const EmployeeDetailModal: React.FC<Props> = ({
       firstName: employee.firstName,
       lastName: employee.lastName,
       middleName: employee.middleName || '',
-      position: employee.position,
-      projectDepartment: employee.projectDepartment,
-      region: employee.region,
-      sector: employee.sector,
+      cbeNoncbe: employee.cbeNoncbe || '',
       rank: employee.rank,
-      employmentStatus: employee.employmentStatus,
-      monthCleared: employee.monthCleared || '',
-      status: employee.status,
-      effectiveDateOfResignation: employee.effectiveDateOfResignation || ''
+      empStatus: employee.empStatus,
+      position: employee.position,
+      costcode: employee.costcode || '',
+      projName: employee.projName,
+      projHr: employee.projHr || '',
+      emailAddress: employee.emailAddress || '',
+      mobileAssignment: employee.mobileAssignment || '',
+      mobileNumber: employee.mobileNumber || '',
+      laptopAssignment: employee.laptopAssignment || '',
+      assetCode: employee.assetCode || '',
+      others: employee.others || '',
+      remarks: employee.remarks || '',
+      status: employee.status
     });
     setIsEditing(false);
     setError(null);
@@ -174,182 +185,158 @@ export const EmployeeDetailModal: React.FC<Props> = ({
     <>
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal" onClick={(e) => e.stopPropagation()}>
-
-          {/* Header */}
           <div className="modal-header">
             <div>
               <h2>{isEditing ? 'Edit Employee' : employee.fullName}</h2>
               <p className="modal-subtitle">
-                {isEditing ? `ID: ${employee.idNumber}` : `ID: ${employee.idNumber} • ${employee.position}`}
+                {isEditing ? `Code: ${employee.empcode}` : `${employee.empcode} • ${employee.position}`}
               </p>
             </div>
             <button className="modal-close" onClick={onClose} disabled={isLoading}>✕</button>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="error-box" style={{ margin: '16px 24px 0' }}>
-              ⚠ {error}
+              ⚠️ {error}
             </div>
           )}
 
-          {/* Body */}
           <div className="modal-body">
             {isEditing ? (
               <form className="edit-form">
                 <div className="form-row">
                   <div className="form-group">
                     <label>First Name *</label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
+                    <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} disabled={isLoading} />
                   </div>
                   <div className="form-group">
                     <label>Last Name *</label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
+                    <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} disabled={isLoading} />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label>Middle Name</label>
-                    <input
-                      type="text"
-                      name="middleName"
-                      value={formData.middleName}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
+                    <input type="text" name="middleName" value={formData.middleName} onChange={handleInputChange} disabled={isLoading} />
+                  </div>
+                  <div className="form-group">
+                    <label>CBE/NonCBE</label>
+                    <select name="cbeNoncbe" value={formData.cbeNoncbe} onChange={handleInputChange} disabled={isLoading}>
+                      <option value="">Not Specified</option>
+                      <option value="Y">Y (CBE)</option>
+                      <option value="N">N (Non-CBE)</option>
+                    </select>
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label>Position *</label>
-                    <input
-                      type="text"
-                      name="position"
-                      value={formData.position}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
+                    <input type="text" name="position" value={formData.position} onChange={handleInputChange} disabled={isLoading} />
                   </div>
                   <div className="form-group">
                     <label>Rank</label>
-                    <input
-                      type="text"
-                      name="rank"
-                      value={formData.rank}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
+                    <input type="text" name="rank" value={formData.rank} onChange={handleInputChange} disabled={isLoading} />
                   </div>
                 </div>
 
                 <div className="form-row">
-                  <div className="form-group">
-                    <label>Project / Department *</label>
-                    <input
-                      type="text"
-                      name="projectDepartment"
-                      value={formData.projectDepartment}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Region</label>
-                    <input
-                      type="text"
-                      name="region"
-                      value={formData.region}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Sector</label>
-                    <input
-                      type="text"
-                      name="sector"
-                      value={formData.sector}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
-                  </div>
                   <div className="form-group">
                     <label>Employment Status</label>
-                    <select
-                      name="employmentStatus"
-                      value={formData.employmentStatus}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    >
-                      <option value="Active">Active</option>
+                    <select name="empStatus" value={formData.empStatus} onChange={handleInputChange} disabled={isLoading}>
+                      <option value="Project Hire">Project Hire</option>
+                      <option value="Regular">Regular</option>
                       <option value="Resigned">Resigned</option>
                       <option value="Terminated">Terminated</option>
-                      <option value="On Leave">On Leave</option>
+                      <option value="End of Contract">End of Contract</option>
                     </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Cost Code</label>
+                    <input type="text" name="costcode" value={formData.costcode} onChange={handleInputChange} disabled={isLoading} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group" style={{gridColumn: '1 / -1'}}>
+                    <label>Project Name *</label>
+                    <input type="text" name="projName" value={formData.projName} onChange={handleInputChange} disabled={isLoading} />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Month Cleared</label>
-                    <input
-                      type="text"
-                      name="monthCleared"
-                      value={formData.monthCleared}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
+                    <label>Project HR</label>
+                    <input type="text" name="projHr" value={formData.projHr} onChange={handleInputChange} disabled={isLoading} />
                   </div>
                   <div className="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="emailAddress" value={formData.emailAddress} onChange={handleInputChange} disabled={isLoading} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Mobile Assignment</label>
+                    <input type="text" name="mobileAssignment" value={formData.mobileAssignment} onChange={handleInputChange} disabled={isLoading} />
+                  </div>
+                  <div className="form-group">
+                    <label>Mobile Number</label>
+                    <input type="text" name="mobileNumber" value={formData.mobileNumber} onChange={handleInputChange} disabled={isLoading} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Laptop Assignment</label>
+                    <input type="text" name="laptopAssignment" value={formData.laptopAssignment} onChange={handleInputChange} disabled={isLoading} />
+                  </div>
+                  <div className="form-group">
+                    <label>Asset Code</label>
+                    <input type="text" name="assetCode" value={formData.assetCode} onChange={handleInputChange} disabled={isLoading} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group" style={{gridColumn: '1 / -1'}}>
+                    <label>Others (Specify items assigned)</label>
+                    <textarea name="others" value={formData.others} onChange={handleInputChange} disabled={isLoading} rows={2} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group" style={{gridColumn: '1 / -1'}}>
+                    <label>Remarks</label>
+                    <textarea name="remarks" value={formData.remarks} onChange={handleInputChange} disabled={isLoading} rows={2} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
                     <label>Status</label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    >
+                    <select name="status" value={formData.status} onChange={handleInputChange} disabled={isLoading}>
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                     </select>
                   </div>
                 </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Resignation Date</label>
-                    <input
-                      type="date"
-                      name="effectiveDateOfResignation"
-                      value={formData.effectiveDateOfResignation ? formData.effectiveDateOfResignation.split('T')[0] : ''}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
               </form>
             ) : (
               <div className="detail-grid">
+                <div className="detail-item">
+                  <span className="detail-label">Employee Code</span>
+                  <span className="detail-value">{employee.empcode}</span>
+                </div>
 
                 <div className="detail-item">
                   <span className="detail-label">First Name</span>
                   <span className="detail-value">{employee.firstName}</span>
+                </div>
+
+                <div className="detail-item">
+                  <span className="detail-label">Middle Name</span>
+                  <span className="detail-value">{employee.middleName || <span className="muted">N/A</span>}</span>
                 </div>
 
                 <div className="detail-item">
@@ -358,20 +345,8 @@ export const EmployeeDetailModal: React.FC<Props> = ({
                 </div>
 
                 <div className="detail-item">
-                  <span className="detail-label">Middle Name</span>
-                  <span className="detail-value">
-                    {employee.middleName ? employee.middleName : <span className="muted">N/A</span>}
-                  </span>
-                </div>
-
-                <div className="detail-item">
-                  <span className="detail-label">ID Number</span>
-                  <span className="detail-value">{employee.idNumber}</span>
-                </div>
-
-                <div className="detail-item">
-                  <span className="detail-label">Position</span>
-                  <span className="detail-value">{employee.position}</span>
+                  <span className="detail-label">CBE/NonCBE</span>
+                  <span className="detail-value">{employee.cbeNoncbe || <span className="muted">N/A</span>}</span>
                 </div>
 
                 <div className="detail-item">
@@ -380,35 +355,63 @@ export const EmployeeDetailModal: React.FC<Props> = ({
                 </div>
 
                 <div className="detail-item">
-                  <span className="detail-label">Project / Department</span>
-                  <span className="detail-value">{employee.projectDepartment}</span>
-                </div>
-
-                <div className="detail-item">
-                  <span className="detail-label">Region</span>
-                  <span className="detail-value">{employee.region}</span>
-                </div>
-
-                <div className="detail-item">
-                  <span className="detail-label">Sector</span>
-                  <span className="detail-value">{employee.sector}</span>
-                </div>
-
-                <div className="detail-item">
                   <span className="detail-label">Employment Status</span>
-                  <span className="detail-value">{employee.employmentStatus}</span>
+                  <span className="detail-value">{employee.empStatus}</span>
                 </div>
 
                 <div className="detail-item">
-                  <span className="detail-label">Year</span>
-                  <span className="detail-value">{employee.year}</span>
+                  <span className="detail-label">Position</span>
+                  <span className="detail-value">{employee.position}</span>
                 </div>
 
                 <div className="detail-item">
-                  <span className="detail-label">Month Cleared</span>
-                  <span className="detail-value">
-                    {employee.monthCleared ? employee.monthCleared : <span className="muted">N/A</span>}
-                  </span>
+                  <span className="detail-label">Cost Code</span>
+                  <span className="detail-value">{employee.costcode || <span className="muted">N/A</span>}</span>
+                </div>
+
+                <div className="detail-item" style={{gridColumn: '1 / -1'}}>
+                  <span className="detail-label">Project Name</span>
+                  <span className="detail-value">{employee.projName}</span>
+                </div>
+
+                <div className="detail-item">
+                  <span className="detail-label">Project HR</span>
+                  <span className="detail-value">{employee.projHr || <span className="muted">N/A</span>}</span>
+                </div>
+
+                <div className="detail-item">
+                  <span className="detail-label">Email Address</span>
+                  <span className="detail-value">{employee.emailAddress || <span className="muted">N/A</span>}</span>
+                </div>
+
+                <div className="detail-item">
+                  <span className="detail-label">Mobile Assignment</span>
+                  <span className="detail-value">{employee.mobileAssignment || <span className="muted">N/A</span>}</span>
+                </div>
+
+                <div className="detail-item">
+                  <span className="detail-label">Mobile Number</span>
+                  <span className="detail-value">{employee.mobileNumber || <span className="muted">N/A</span>}</span>
+                </div>
+
+                <div className="detail-item">
+                  <span className="detail-label">Laptop Assignment</span>
+                  <span className="detail-value">{employee.laptopAssignment || <span className="muted">N/A</span>}</span>
+                </div>
+
+                <div className="detail-item">
+                  <span className="detail-label">Asset Code</span>
+                  <span className="detail-value">{employee.assetCode || <span className="muted">N/A</span>}</span>
+                </div>
+
+                <div className="detail-item" style={{gridColumn: '1 / -1'}}>
+                  <span className="detail-label">Others (Items Assigned)</span>
+                  <span className="detail-value">{employee.others || <span className="muted">N/A</span>}</span>
+                </div>
+
+                <div className="detail-item" style={{gridColumn: '1 / -1'}}>
+                  <span className="detail-label">Remarks</span>
+                  <span className="detail-value">{employee.remarks || <span className="muted">N/A</span>}</span>
                 </div>
 
                 <div className="detail-item">
@@ -419,73 +422,39 @@ export const EmployeeDetailModal: React.FC<Props> = ({
                     </span>
                   </span>
                 </div>
-
-                <div className="detail-item">
-                  <span className="detail-label">Resignation Date</span>
-                  <span className="detail-value">
-                    {employee.effectiveDateOfResignation
-                      ? new Date(employee.effectiveDateOfResignation).toLocaleDateString()
-                      : <span className="muted">N/A</span>
-                    }
-                  </span>
-                </div>
-
               </div>
             )}
           </div>
 
-          {/* Footer */}
           {userRole === 'admin' && (
             <div className="modal-footer">
               {isEditing ? (
                 <>
-                  <button 
-                    className="btn btn-edit" 
-                    onClick={handleSave}
-                    disabled={isLoading}
-                  >
+                  <button className="btn btn-edit" onClick={handleSave} disabled={isLoading}>
                     {isLoading ? '💾 Saving...' : '✓ Save'}
                   </button>
-                  <button 
-                    className="btn btn-secondary" 
-                    onClick={handleCancel}
-                    disabled={isLoading}
-                  >
+                  <button className="btn btn-secondary" onClick={handleCancel} disabled={isLoading}>
                     ✕ Cancel
                   </button>
                 </>
               ) : (
                 <>
-                  <button 
-                    className="btn btn-clearance"
-                    onClick={handleClearanceClick}
-                    disabled={isLoading}
-                    title="Generate clearance form (you'll choose Project Hire or Contractual)"
-                  >
+                  <button className="btn btn-clearance" onClick={handleClearanceClick} disabled={isLoading}>
                     📄 Clearance
                   </button>
-                  <button 
-                    className="btn btn-edit"
-                    onClick={() => setIsEditing(true)}
-                  >
+                  <button className="btn btn-edit" onClick={() => setIsEditing(true)}>
                     ✎ Edit
                   </button>
-                  <button 
-                    className="btn btn-danger"
-                    onClick={handleDelete}
-                    disabled={isLoading}
-                  >
+                  <button className="btn btn-danger" onClick={handleDelete} disabled={isLoading}>
                     {isLoading ? '⏳ Deleting...' : '🗑 Delete'}
                   </button>
                 </>
               )}
             </div>
           )}
-
         </div>
       </div>
 
-      {/* Clearance Type Selection Modal */}
       {showClearanceTypeModal && (
         <ClearanceTypeModal
           employeeName={employee.fullName}

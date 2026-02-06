@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { EmployeeFilters as FiltersType } from '../types/filter.types';
 
 interface FilterOptions {
-  monthsCleared: string[];
-  positions: string[];
-  projectDepartments: string[];
-  regions: string[];
-  sectors: string[];
   ranks: string[];
-  employmentStatuses: string[];
+  empStatuses: string[];
+  positions: string[];
+  projNames: string[];
+  cbeNoncbes: string[];
 }
 
 interface Props {
@@ -18,24 +16,19 @@ interface Props {
 
 export const EmployeeFilters: React.FC<Props> = ({ onFilterChange, employees }) => {
   const [search, setSearch] = useState('');
-  const [monthCleared, setMonthCleared] = useState('');
-  const [position, setPosition] = useState('');
-  const [projectDepartment, setProjectDepartment] = useState('');
-  const [region, setRegion] = useState('');
-  const [sector, setSector] = useState('');
   const [rank, setRank] = useState('');
-  const [employmentStatus, setEmploymentStatus] = useState('');
+  const [empStatus, setEmpStatus] = useState('');
+  const [position, setPosition] = useState('');
+  const [projName, setProjName] = useState('');
+  const [cbeNoncbe, setCbeNoncbe] = useState('');
   const [status, setStatus] = useState('');
 
-  // Derive unique filter options from the FULL employee list
   const [options, setOptions] = useState<FilterOptions>({
-    monthsCleared: [],
-    positions: [],
-    projectDepartments: [],
-    regions: [],
-    sectors: [],
     ranks: [],
-    employmentStatuses: []
+    empStatuses: [],
+    positions: [],
+    projNames: [],
+    cbeNoncbes: []
   });
 
   useEffect(() => {
@@ -44,22 +37,22 @@ export const EmployeeFilters: React.FC<Props> = ({ onFilterChange, employees }) 
     const unique = (arr: string[]) => [...new Set(arr.filter(Boolean))].sort();
 
     setOptions({
-      monthsCleared: unique(employees.map((e: any) => e.monthCleared)),
-      positions: unique(employees.map((e: any) => e.position)),
-      projectDepartments: unique(employees.map((e: any) => e.projectDepartment)),
-      regions: unique(employees.map((e: any) => e.region)),
-      sectors: unique(employees.map((e: any) => e.sector)),
       ranks: unique(employees.map((e: any) => e.rank)),
-      employmentStatuses: unique(employees.map((e: any) => e.employmentStatus))
+      empStatuses: unique(employees.map((e: any) => e.empStatus)),
+      positions: unique(employees.map((e: any) => e.position)),
+      projNames: unique(employees.map((e: any) => e.projName)),
+      cbeNoncbes: unique(employees.map((e: any) => e.cbeNoncbe))
     });
   }, [employees]);
 
   const applyFilters = (overrides: Partial<FiltersType> = {}) => {
     const filters: FiltersType = {
       search: search || undefined,
-      region: region || undefined,
-      sector: sector || undefined,
-      employmentStatus: (employmentStatus as any) || undefined,
+      rank: rank || undefined,
+      empStatus: empStatus || undefined,
+      position: position || undefined,
+      projName: projName || undefined,
+      cbeNoncbe: cbeNoncbe || undefined,
       status: (status as any) || undefined,
       ...overrides
     };
@@ -82,13 +75,11 @@ export const EmployeeFilters: React.FC<Props> = ({ onFilterChange, employees }) 
 
   const clearAll = () => {
     setSearch('');
-    setMonthCleared('');
-    setPosition('');
-    setProjectDepartment('');
-    setRegion('');
-    setSector('');
     setRank('');
-    setEmploymentStatus('');
+    setEmpStatus('');
+    setPosition('');
+    setProjName('');
+    setCbeNoncbe('');
     setStatus('');
     onFilterChange({});
   };
@@ -117,10 +108,10 @@ export const EmployeeFilters: React.FC<Props> = ({ onFilterChange, employees }) 
       {/* Search Row */}
       <div className="filters-row">
         <div className="filter-group search-group">
-          <label>🔍 Search by Name, ID, or Position</label>
+          <label>🔍 Search by Name, Emp Code, Position, or Project</label>
           <input
             type="text"
-            placeholder="e.g., John Doe, A9007789..."
+            placeholder="e.g., John Doe, A9007789, Engineer..."
             value={search}
             onChange={handleSearch}
           />
@@ -129,19 +120,16 @@ export const EmployeeFilters: React.FC<Props> = ({ onFilterChange, employees }) 
 
       {/* First Row of Filters */}
       <div className="filters-row">
-        {renderSelect("Region", region, options.regions, "region", setRegion, "All Regions")}
-        {renderSelect("Sector", sector, options.sectors, "sector", setSector, "All Sectors")}
-        {renderSelect("Employment Status", employmentStatus, options.employmentStatuses, "employmentStatus", setEmploymentStatus, "All Types")}
         {renderSelect("Rank", rank, options.ranks, "rank", setRank, "All Ranks")}
+        {renderSelect("Emp Status", empStatus, options.empStatuses, "empStatus", setEmpStatus, "All Statuses")}
+        {renderSelect("Position", position, options.positions, "position", setPosition, "All Positions")}
+        {renderSelect("CBE/NonCBE", cbeNoncbe, options.cbeNoncbes, "cbeNoncbe", setCbeNoncbe, "All Types")}
       </div>
 
       {/* Second Row of Filters */}
       <div className="filters-row">
-        {renderSelect("Position", position, options.positions, "position", setPosition, "All Positions")}
-        {renderSelect("Project / Department", projectDepartment, options.projectDepartments, "projectDepartment", setProjectDepartment, "All Projects")}
-        {renderSelect("Month Cleared", monthCleared, options.monthsCleared, "monthCleared", setMonthCleared, "All Months")}
+        {renderSelect("Project", projName, options.projNames, "projName", setProjName, "All Projects")}
         
-        {/* Status Filter - Active/Inactive */}
         <div className="filter-group">
           <label>Status</label>
           <select value={status} onChange={(e) => handleSelect(e.target.value, setStatus, "status")}>

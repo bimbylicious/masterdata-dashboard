@@ -27,8 +27,8 @@ export class EmployeeService {
     return response.data || [];
   }
 
-  async getEmployeeById(id: string): Promise<Employee | null> {
-    const response = await this.api.get<Employee>(`/employees/${id}`);
+  async getEmployeeById(empcode: string): Promise<Employee | null> {
+    const response = await this.api.get<Employee>(`/employees/${empcode}`);
     return response.data || null;
   }
 
@@ -50,13 +50,13 @@ export class EmployeeService {
     window.URL.revokeObjectURL(url);
   }
 
-  async updateEmployee(id: string, data: Partial<Employee>): Promise<Employee> {
-    const response = await this.api.put<Employee>(`/employees/${id}`, data);
+  async updateEmployee(empcode: string, data: Partial<Employee>): Promise<Employee> {
+    const response = await this.api.put<Employee>(`/employees/${empcode}`, data);
     return response.data!;
   }
 
-  async deleteEmployee(id: string): Promise<boolean> {
-    const response = await this.api.delete(`/employees/${id}`);
+  async deleteEmployee(empcode: string): Promise<boolean> {
+    const response = await this.api.delete(`/employees/${empcode}`);
     return response.success;
   }
 }

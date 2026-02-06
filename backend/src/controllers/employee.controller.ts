@@ -9,7 +9,6 @@ export class EmployeeController {
     this.service = new EmployeeService();
   }
 
-  // Helper to safely get string from query param
   private getString(value: any): string | undefined {
     if (Array.isArray(value)) return value[0];
     return value as string | undefined;
@@ -19,12 +18,12 @@ export class EmployeeController {
     try {
       const filters = {
         search: this.getString(req.query.search),
-        year: req.query.year ? Number(this.getString(req.query.year)) : undefined,
-        projectDepartment: this.getString(req.query.projectDepartment),
-        region: this.getString(req.query.region),
-        sector: this.getString(req.query.sector),
         rank: this.getString(req.query.rank),
-        employmentStatus: this.getString(req.query.employmentStatus) as any,
+        empStatus: this.getString(req.query.empStatus),
+        position: this.getString(req.query.position),
+        projName: this.getString(req.query.projName),
+        cbeNoncbe: this.getString(req.query.cbeNoncbe),
+        costcode: this.getString(req.query.costcode),
         status: this.getString(req.query.status) as any
       };
 
@@ -42,7 +41,8 @@ export class EmployeeController {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const data = await this.service.getEmployeeById(this.getString(req.params.id)!, req.user!.role);
+      const empcode = this.getString(req.params.empcode)!;
+      const data = await this.service.getEmployeeById(empcode, req.user!.role);
       if (!data) {
         return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Employee not found' } });
       }
@@ -65,7 +65,8 @@ export class EmployeeController {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const data = await this.service.updateEmployee(this.getString(req.params.id)!, req.body);
+      const empcode = this.getString(req.params.empcode)!;
+      const data = await this.service.updateEmployee(empcode, req.body);
       res.json({ success: true, data });
     } catch (error: any) {
       console.error('❌ Error in update:', error);
@@ -75,7 +76,8 @@ export class EmployeeController {
 
   async deleteEmployee(req: AuthRequest, res: Response) {
     try {
-      const success = await this.service.deleteEmployee(this.getString(req.params.id)!);
+      const empcode = this.getString(req.params.empcode)!;
+      const success = await this.service.deleteEmployee(empcode);
       if (!success) {
         return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Employee not found' } });
       }
@@ -97,13 +99,11 @@ export class EmployeeController {
       res.json({ success: true, data: result });
     } catch (error: any) {
       console.error('❌ Error in uploadExcel:', error);
-      console.error('Stack trace:', error.stack);
       res.status(500).json({ 
         success: false, 
         error: { 
           code: 'IMPORT_ERROR', 
-          message: error.message,
-          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+          message: error.message
         } 
       });
     }
@@ -120,13 +120,11 @@ export class EmployeeController {
       res.json({ success: true, data: result });
     } catch (error: any) {
       console.error('❌ Error in updateExcel:', error);
-      console.error('Stack trace:', error.stack);
       res.status(500).json({ 
         success: false, 
         error: { 
           code: 'UPDATE_ERROR', 
-          message: error.message,
-          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+          message: error.message
         } 
       });
     }

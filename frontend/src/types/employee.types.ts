@@ -1,21 +1,24 @@
 export interface Employee {
-  no: number;
-  year: number;
-  monthCleared?: string;
-  idNumber: string;
-  lastName: string;
+  empcode: string;
   firstName: string;
   middleName?: string;
-  position: string;
-  projectDepartment: string;
-  region: string;
-  sector: string;
-  rank: string;
-  employmentStatus: string;
-  effectiveDateOfResignation?: string;
-
-  id: string;
+  lastName: string;
   fullName: string;
+  cbeNoncbe?: string;
+  rank: string;
+  empStatus: string;
+  position: string;
+  costcode?: string;
+  projName: string;
+  projHr?: string;
+  emailAddress?: string;
+  mobileAssignment?: string;
+  mobileNumber?: string;
+  laptopAssignment?: string;
+  assetCode?: string;
+  others?: string;
+  remarks?: string;
+  
   role: UserRole;
   status: 'active' | 'inactive';
   createdAt: Date;
@@ -25,15 +28,12 @@ export interface Employee {
 export type UserRole = 'admin' | 'employee';
 
 export interface EmployeeSummary {
-  id: string;
-  idNumber: string;
+  empcode: string;
   fullName: string;
   position: string;
-  projectDepartment: string;
-  region: string;
-  sector: string;
+  projName: string;
   rank: string;
-  employmentStatus: string;
-  monthCleared?: string;
+  empStatus: string;
+  cbeNoncbe?: string;
   status: 'active' | 'inactive';
 }

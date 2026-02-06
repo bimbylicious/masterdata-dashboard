@@ -4,7 +4,7 @@ import { EmployeeSummary } from '../types/employee.types';
 interface Props {
   employees: EmployeeSummary[];
   userRole: 'admin' | 'employee';
-  onRowClick: (id: string) => void;
+  onRowClick: (empcode: string) => void;
 }
 
 type SortField = keyof EmployeeSummary;
@@ -17,7 +17,6 @@ export const EmployeeTable: React.FC<Props> = ({ employees, userRole, onRowClick
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      // Cycle: none → asc → desc → none
       if (sortDirection === 'none') {
         setSortDirection('asc');
       } else if (sortDirection === 'asc') {
@@ -32,12 +31,10 @@ export const EmployeeTable: React.FC<Props> = ({ employees, userRole, onRowClick
     }
   };
 
-  // Use useMemo to prevent unnecessary re-sorting
   const sortedEmployees = useMemo(() => {
     const sorted = [...employees];
 
     if (!sortField || sortDirection === 'none') {
-      // Keep database order if no sort is active
       return sorted;
     }
 
@@ -58,12 +55,12 @@ export const EmployeeTable: React.FC<Props> = ({ employees, userRole, onRowClick
   };
 
   const columns: { key: SortField; label: string }[] = [
-    { key: 'idNumber', label: 'ID Number' },
+    { key: 'empcode', label: 'Emp Code' },
     { key: 'fullName', label: 'Name' },
     { key: 'position', label: 'Position' },
-    { key: 'projectDepartment', label: 'Project / Dept' },
-    { key: 'region', label: 'Region' },
-    { key: 'employmentStatus', label: 'Employment' },
+    { key: 'rank', label: 'Rank' },
+    { key: 'projName', label: 'Project' },
+    { key: 'empStatus', label: 'Emp Status' },
     { key: 'status', label: 'Status' },
   ];
 
@@ -90,29 +87,31 @@ export const EmployeeTable: React.FC<Props> = ({ employees, userRole, onRowClick
           {sortedEmployees.length === 0 ? (
             <tr>
               <td colSpan={columns.length + 1} style={{ textAlign: 'center', padding: '40px', color: '#95a5a6' }}>
-                📭 No employees to display
+                🔭 No employees to display
               </td>
             </tr>
           ) : (
             sortedEmployees.map((emp, index) => (
               <tr 
-                key={emp.id} 
-                onClick={() => onRowClick(emp.id)}
-                onMouseEnter={() => setHoveredRow(emp.id)}
+                key={emp.empcode} 
+                onClick={() => onRowClick(emp.empcode)}
+                onMouseEnter={() => setHoveredRow(emp.empcode)}
                 onMouseLeave={() => setHoveredRow(null)}
-                className={`employee-row ${hoveredRow === emp.id ? 'row-hovered' : ''}`}
+                className={`employee-row ${hoveredRow === emp.empcode ? 'row-hovered' : ''}`}
               >
                 <td className="row-number">{index + 1}</td>
-                <td className="id-number" title={emp.idNumber}>{emp.idNumber}</td>
+                <td className="id-number" title={emp.empcode}>{emp.empcode}</td>
                 <td className="employee-name">
-                  <span className="name-indicator">👤</span>
+                  <span className="name-indicator">
+                    {emp.cbeNoncbe === 'Y' ? '⭐' : '👤'}
+                  </span>
                   {emp.fullName}
                 </td>
                 <td className="position" title={emp.position}>{emp.position}</td>
-                <td className="department" title={emp.projectDepartment}>{emp.projectDepartment}</td>
-                <td className="region">{emp.region}</td>
-                <td className="employment-status">
-                  <span className="status-label">{emp.employmentStatus}</span>
+                <td className="rank">{emp.rank}</td>
+                <td className="proj-name" title={emp.projName}>{emp.projName}</td>
+                <td className="emp-status">
+                  <span className="status-label">{emp.empStatus}</span>
                 </td>
                 <td className="status">
                   <span className={`status-badge ${emp.status === 'active' ? 'status-active' : 'status-inactive'}`}>

@@ -2,13 +2,12 @@ import { Employee } from './employee.types';
 
 export interface EmployeeFilters {
   search?: string;
-  monthCleared?: string;
-  position?: string;
-  projectDepartment?: string;
-  region?: string;
-  sector?: string;
   rank?: string;
-  employmentStatus?: string;
+  empStatus?: string;
+  position?: string;
+  projName?: string;
+  cbeNoncbe?: string;
+  costcode?: string;
   status?: 'active' | 'inactive';
 }
 

@@ -17,24 +17,24 @@ export class EmployeeService {
     return await this.model.findAll(filters, sort);
   }
 
-  async getEmployeeById(id: string, userRole: UserRole): Promise<Employee | null> {
-    return await this.model.findById(id);
+  async getEmployeeById(empcode: string, userRole: UserRole): Promise<Employee | null> {
+    return await this.model.findById(empcode);
   }
 
   async searchEmployees(query: string): Promise<EmployeeSummary[]> {
     return await this.model.search(query);
   }
 
-  async createEmployee(data: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>): Promise<Employee> {
+  async createEmployee(data: Omit<Employee, 'createdAt' | 'updatedAt'>): Promise<Employee> {
     return await this.model.create(data);
   }
 
-  async updateEmployee(id: string, data: Partial<Employee>): Promise<Employee> {
-    return await this.model.update(id, data);
+  async updateEmployee(empcode: string, data: Partial<Employee>): Promise<Employee> {
+    return await this.model.update(empcode, data);
   }
 
-  async deleteEmployee(id: string): Promise<boolean> {
-    return await this.model.delete(id);
+  async deleteEmployee(empcode: string): Promise<boolean> {
+    return await this.model.delete(empcode);
   }
 
   async importFromExcel(buffer: Buffer) {
@@ -55,7 +55,7 @@ export class EmployeeService {
       const employees = rows.map((row: ExcelEmployeeRow) =>
         this.excelService.transformExcelRowToEmployee(row)
       );
-      console.log(`📄 Transformed ${employees.length} employees`);
+      console.log(`🔄 Transformed ${employees.length} employees`);
 
       console.log('💾 Starting bulk insert into database...');
       const result = await this.model.bulkCreate(employees);
@@ -66,7 +66,7 @@ export class EmployeeService {
         success: true,
         totalRows: rows.length,
         importedRows: result.created.length,
-        skippedRows: result.skipped.length,
+        skippedRows: result.skipped,
         duplicates: result.duplicates,
         errors: []
       };
@@ -81,7 +81,7 @@ export class EmployeeService {
     try {
       const summaries = await this.model.findAll();
       const fullEmployees = await Promise.all(
-        summaries.map((summary: EmployeeSummary) => this.model.findById(summary.id))
+        summaries.map((summary: EmployeeSummary) => this.model.findById(summary.empcode))
       );
       return this.excelService.exportToExcel(
         fullEmployees.filter((emp): emp is Employee => emp !== null)
@@ -122,7 +122,7 @@ export class EmployeeService {
         totalRows: rows.length,
         updatedRows: result.updated.length,
         insertedRows: result.inserted.length,
-        skippedRows: result.skipped.length,
+        skippedRows: result.skipped,
         errors: []
       };
     } catch (error: any) {
@@ -131,5 +131,4 @@ export class EmployeeService {
       throw new Error(`Excel update failed: ${error.message}`);
     }
   }
-  
 }

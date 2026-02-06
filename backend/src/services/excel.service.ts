@@ -3,20 +3,14 @@ import { Employee } from '../types/employee.types.backend.js';
 import { ExcelEmployeeRow, ExcelValidationRule, ExcelImportResult, ExcelError } from '../types/excel.types.js';
 
 export class ExcelService {
-  // UPDATED: Only essential fields are required
   private validationRules: ExcelValidationRule[] = [
-    { column: 'NO',                    required: false,  type: 'number' },
-    { column: 'YEAR',                  required: false,  type: 'number' },
-    { column: 'ID NUMBER',             required: false,  type: 'string' },
-    { column: 'LAST NAME',             required: false,  type: 'string' },
-    { column: 'FIRST NAME',            required: false,  type: 'string' },
-    { column: 'MIDDLE NAME',           required: false, type: 'string' },
-    { column: 'POSITION',              required: false, type: 'string' },
-    { column: 'PROJECT/DEPARTMENT',    required: false, type: 'string' },
-    { column: 'REGION',                required: false, type: 'string' },
-    { column: 'SECTOR',                required: false, type: 'string' },
-    { column: 'RANK',                  required: false, type: 'string' },
-    { column: 'EMPLOYMENT STATUS',     required: false, type: 'string' }
+    { column: 'EMPCODE',           required: true,  type: 'string' },
+    { column: 'FIRST NAME',        required: true,  type: 'string' },
+    { column: 'LAST NAME',         required: true,  type: 'string' },
+    { column: 'RANK',              required: true,  type: 'string' },
+    { column: 'EMP STATUS',        required: true,  type: 'string' },
+    { column: 'POSITION',          required: true,  type: 'string' },
+    { column: 'PROJ NAME',         required: true,  type: 'string' }
   ];
 
   parseExcelFile(buffer: Buffer): ExcelEmployeeRow[] {
@@ -33,7 +27,6 @@ export class ExcelService {
       this.validationRules.forEach(rule => {
         const value = row[rule.column as keyof ExcelEmployeeRow];
 
-        // Only validate if required
         if (rule.required && (value === undefined || value === null || value === '')) {
           errors.push({
             row: index + 2,
@@ -41,27 +34,6 @@ export class ExcelService {
             value,
             message: `${rule.column} is required`
           });
-        }
-
-        // Validate type for non-empty values
-        if (value !== undefined && value !== null && value !== '' && rule.type === 'number') {
-          let numValue: number;
-          if (typeof value === 'string') {
-            numValue = parseFloat(value);
-          } else if (typeof value === 'number') {
-            numValue = value;
-          } else {
-            numValue = NaN;
-          }
-          
-          if (isNaN(numValue)) {
-            errors.push({
-              row: index + 2,
-              column: rule.column,
-              value,
-              message: `${rule.column} must be a number`
-            });
-          }
         }
       });
     });
@@ -74,29 +46,18 @@ export class ExcelService {
     };
   }
 
-  transformExcelRowToEmployee(row: ExcelEmployeeRow): Omit<Employee, 'id' | 'createdAt' | 'updatedAt'> {
-    // Helper: safely convert to string
+  transformExcelRowToEmployee(row: ExcelEmployeeRow): Omit<Employee, 'createdAt' | 'updatedAt'> {
     const safeString = (value: any): string => {
       if (value === null || value === undefined || value === '') return '';
       return String(value).trim();
     };
 
-    // Helper: safely convert to number
-    const safeNumber = (value: any): number => {
-      if (typeof value === 'number') return value;
-      if (typeof value === 'string') {
-        const parsed = parseInt(value, 10);
-        return isNaN(parsed) ? 0 : parsed;
-      }
-      return 0;
-    };
-
-    // Clean ID number - remove quotes, tabs, spaces, line breaks
-    const idNumber = String(row['ID NUMBER'] || '')
+    // Clean EMPCODE - remove quotes, tabs, spaces, line breaks
+    const empcode = String(row.EMPCODE || '')
       .replace(/["\s\r\n\t]/g, '')
       .trim();
 
-    // Build full name from available parts
+    // Build full name
     const nameParts = [
       safeString(row['FIRST NAME']),
       safeString(row['MIDDLE NAME']),
@@ -105,27 +66,31 @@ export class ExcelService {
     
     const fullName = nameParts.length > 0 ? nameParts.join(' ') : 'Unknown';
 
-    // Determine status from employment status
-    const employmentStatus = safeString(row['EMPLOYMENT STATUS']);
-    const inactiveStatuses = ['Resigned', 'Terminated'];
-    const status = inactiveStatuses.includes(employmentStatus) ? 'inactive' : 'active';
+    // Determine status from EMP STATUS
+    const empStatus = safeString(row['EMP STATUS']);
+    const inactiveStatuses = ['Resigned', 'Terminated', 'End of Contract'];
+    const status = inactiveStatuses.includes(empStatus) ? 'inactive' : 'active';
 
     return {
-      no: safeNumber(row.NO),
-      year: safeNumber(row.YEAR),
-      monthCleared: safeString(row['MONTH CLEARED']) || undefined,
-      idNumber: idNumber || 'UNKNOWN',
-      lastName: safeString(row['LAST NAME']) || 'Unknown',
+      empcode: empcode || 'UNKNOWN',
       firstName: safeString(row['FIRST NAME']) || 'Unknown',
       middleName: safeString(row['MIDDLE NAME']) || undefined,
-      position: safeString(row.POSITION) || 'Not Specified',
-      projectDepartment: safeString(row['PROJECT/DEPARTMENT']) || 'Not Specified',
-      region: safeString(row.REGION) || 'Not Specified',
-      sector: safeString(row.SECTOR) || 'Not Specified',
-      rank: safeString(row.RANK) || 'Not Specified',
-      employmentStatus: employmentStatus || 'Unknown',
-      effectiveDateOfResignation: safeString(row['EFFECTIVE DATE OF RESIGNATION']) || undefined,
+      lastName: safeString(row['LAST NAME']) || 'Unknown',
       fullName,
+      cbeNoncbe: safeString(row['CBE/NonCBE']) || undefined,
+      rank: safeString(row.RANK) || 'Not Specified',
+      empStatus: empStatus || 'Unknown',
+      position: safeString(row.POSITION) || 'Not Specified',
+      costcode: safeString(row.COSTCODE) || undefined,
+      projName: safeString(row['PROJ NAME']) || 'Not Specified',
+      projHr: safeString(row['PROJ HR']) || undefined,
+      emailAddress: safeString(row['EMAIL ADDRESS']) || undefined,
+      mobileAssignment: safeString(row['MOBILE ASSIGNMENT']) || undefined,
+      mobileNumber: safeString(row['MOBILE NUMBER']) || undefined,
+      laptopAssignment: safeString(row['LAPTOP ASSIGNMENT']) || undefined,
+      assetCode: safeString(row['ASSET CODE']) || undefined,
+      others: safeString(row['OTHERS\n(Specify items assigned)']) || undefined,
+      remarks: safeString(row.REMARKS) || undefined,
       role: 'employee',
       status
     };
@@ -135,76 +100,60 @@ export class ExcelService {
     try {
       console.log(`📤 Exporting ${employees.length} employees to Excel...`);
       
-      // Helper to safely format dates
-      const formatDate = (date: any): string => {
-        if (!date) return '';
-        if (typeof date === 'string') return date;
-        if (date instanceof Date) {
-          return date.toISOString().split('T')[0]; // YYYY-MM-DD format
-        }
-        return '';
-      };
-
-      // Helper to ensure values are strings or numbers (not Date objects)
       const safeValue = (value: any): string | number => {
         if (value === null || value === undefined) return '';
-        if (value instanceof Date) return formatDate(value);
         if (typeof value === 'number') return value;
         return String(value);
       };
 
       const excelData = employees.map(emp => ({
-        'NO': safeValue(emp.no),
-        'YEAR': safeValue(emp.year),
-        'MONTH CLEARED': safeValue(emp.monthCleared),
-        'ID NUMBER': safeValue(emp.idNumber),
-        'LAST NAME': safeValue(emp.lastName),
+        'EMPCODE': safeValue(emp.empcode),
         'FIRST NAME': safeValue(emp.firstName),
         'MIDDLE NAME': safeValue(emp.middleName),
-        'GENDER': '',
-        'MARITAL STATUS': '',
-        'POSITION': safeValue(emp.position),
-        'MT': '',
-        'PROJECT/DEPARTMENT': safeValue(emp.projectDepartment),
-        'REGION': safeValue(emp.region),
-        'SECTOR': safeValue(emp.sector),
+        'LAST NAME': safeValue(emp.lastName),
+        'CBE/NonCBE': safeValue(emp.cbeNoncbe),
         'RANK': safeValue(emp.rank),
-        'BIRTHDAY': '',
-        'AGE (UPON RESIGNATION)': '',
-        'EMPLOYMENT STATUS': safeValue(emp.employmentStatus),
-        'EFFECTIVE DATE OF RESIGNATION': formatDate(emp.effectiveDateOfResignation)
+        'EMP STATUS': safeValue(emp.empStatus),
+        'POSITION': safeValue(emp.position),
+        'COSTCODE': safeValue(emp.costcode),
+        'PROJ NAME': safeValue(emp.projName),
+        'PROJ HR': safeValue(emp.projHr),
+        'EMAIL ADDRESS': safeValue(emp.emailAddress),
+        'MOBILE ASSIGNMENT': safeValue(emp.mobileAssignment),
+        'MOBILE NUMBER': safeValue(emp.mobileNumber),
+        'LAPTOP ASSIGNMENT': safeValue(emp.laptopAssignment),
+        'ASSET CODE': safeValue(emp.assetCode),
+        'OTHERS\n(Specify items assigned)': safeValue(emp.others),
+        'REMARKS': safeValue(emp.remarks)
       }));
 
-      console.log(`📊 Creating worksheet with ${excelData.length} rows...`);
       const worksheet = XLSX.utils.json_to_sheet(excelData);
       
-      // Set column widths for better readability
+      // Set column widths
       worksheet['!cols'] = [
-        { wch: 5 },   // NO
-        { wch: 6 },   // YEAR
-        { wch: 15 },  // MONTH CLEARED
-        { wch: 12 },  // ID NUMBER
-        { wch: 20 },  // LAST NAME
-        { wch: 20 },  // FIRST NAME
-        { wch: 20 },  // MIDDLE NAME
-        { wch: 10 },  // GENDER
-        { wch: 15 },  // MARITAL STATUS
+        { wch: 10 },  // EMPCODE
+        { wch: 15 },  // FIRST NAME
+        { wch: 15 },  // MIDDLE NAME
+        { wch: 15 },  // LAST NAME
+        { wch: 12 },  // CBE/NonCBE
+        { wch: 20 },  // RANK
+        { wch: 15 },  // EMP STATUS
         { wch: 30 },  // POSITION
-        { wch: 5 },   // MT
-        { wch: 30 },  // PROJECT/DEPARTMENT
-        { wch: 15 },  // REGION
-        { wch: 25 },  // SECTOR
-        { wch: 15 },  // RANK
-        { wch: 12 },  // BIRTHDAY
-        { wch: 8 },   // AGE
-        { wch: 20 },  // EMPLOYMENT STATUS
-        { wch: 20 }   // EFFECTIVE DATE
+        { wch: 12 },  // COSTCODE
+        { wch: 50 },  // PROJ NAME
+        { wch: 25 },  // PROJ HR
+        { wch: 30 },  // EMAIL ADDRESS
+        { wch: 18 },  // MOBILE ASSIGNMENT
+        { wch: 15 },  // MOBILE NUMBER
+        { wch: 18 },  // LAPTOP ASSIGNMENT
+        { wch: 15 },  // ASSET CODE
+        { wch: 30 },  // OTHERS
+        { wch: 30 }   // REMARKS
       ];
 
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
       
-      console.log(`💾 Writing Excel buffer...`);
       const buffer = XLSX.write(workbook, { 
         type: 'buffer', 
         bookType: 'xlsx',
@@ -216,7 +165,6 @@ export class ExcelService {
       
     } catch (error: any) {
       console.error('❌ Error creating Excel file:', error);
-      console.error('Stack trace:', error.stack);
       throw new Error(`Excel export failed: ${error.message}`);
     }
   }

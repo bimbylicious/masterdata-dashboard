@@ -1,22 +1,36 @@
 export interface Employee {
-  no: number;
-  year: number;
-  monthCleared?: string;
-  idNumber: string;
-  lastName: string;
+  // Primary Key
+  empcode: string;
+  
+  // Employee Name Fields
   firstName: string;
   middleName?: string;
-  position: string;
-  projectDepartment: string;
-  region: string;
-  sector: string;
-  rank: string;
-  employmentStatus: string;
-  effectiveDateOfResignation?: string;
-
-  // System fields
-  id: string;
+  lastName: string;
   fullName: string;
+  
+  // Employee Classification
+  cbeNoncbe?: string;  // Y/N for CBE or NonCBE
+  rank: string;
+  empStatus: string;
+  position: string;
+  
+  // Project/Assignment Information
+  costcode?: string;
+  projName: string;
+  projHr?: string;
+  
+  // Contact Information
+  emailAddress?: string;
+  mobileAssignment?: string;
+  mobileNumber?: string;
+  
+  // Asset Assignment
+  laptopAssignment?: string;
+  assetCode?: string;
+  others?: string;
+  remarks?: string;
+  
+  // System fields
   role: UserRole;
   status: 'active' | 'inactive';
   createdAt: Date;
@@ -26,15 +40,12 @@ export interface Employee {
 export type UserRole = 'admin' | 'employee';
 
 export interface EmployeeSummary {
-  id: string;
-  idNumber: string;
+  empcode: string;
   fullName: string;
   position: string;
-  projectDepartment: string;
-  region: string;
-  sector: string;
+  projName: string;
   rank: string;
-  employmentStatus: string;
-  monthCleared?: string;
+  empStatus: string;
+  cbeNoncbe?: string;
   status: 'active' | 'inactive';
 }
