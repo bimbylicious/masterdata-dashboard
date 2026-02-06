@@ -105,7 +105,6 @@ export const EmployeeFilters: React.FC<Props> = ({ onFilterChange, employees }) 
 
   return (
     <div className="filters-container">
-      {/* Search Row */}
       <div className="filters-row">
         <div className="filter-group search-group">
           <label>🔍 Search by Name, Emp Code, Position, or Project</label>
@@ -118,7 +117,6 @@ export const EmployeeFilters: React.FC<Props> = ({ onFilterChange, employees }) 
         </div>
       </div>
 
-      {/* First Row of Filters */}
       <div className="filters-row">
         {renderSelect("Rank", rank, options.ranks, "rank", setRank, "All Ranks")}
         {renderSelect("Emp Status", empStatus, options.empStatuses, "empStatus", setEmpStatus, "All Statuses")}
@@ -126,7 +124,6 @@ export const EmployeeFilters: React.FC<Props> = ({ onFilterChange, employees }) 
         {renderSelect("CBE/NonCBE", cbeNoncbe, options.cbeNoncbes, "cbeNoncbe", setCbeNoncbe, "All Types")}
       </div>
 
-      {/* Second Row of Filters */}
       <div className="filters-row">
         {renderSelect("Project", projName, options.projNames, "projName", setProjName, "All Projects")}
         
@@ -140,7 +137,6 @@ export const EmployeeFilters: React.FC<Props> = ({ onFilterChange, employees }) 
         </div>
       </div>
 
-      {/* Clear Button Row */}
       <div className="filters-row filters-actions">
         <button className="btn-clear" onClick={clearAll}>✕ Clear All Filters</button>
       </div>

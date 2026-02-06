@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEmployees } from './hooks/useEmployees';
 import { EmployeeTable } from './components/EmployeeTable';
 import { EmployeeFilters } from './components/EmployeeFilters';
@@ -28,14 +28,14 @@ function App() {
   } = useEmployees();
 
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [previousFilteredCount, setPreviousFilteredCount] = useState(0);
   const userRole: 'admin' | 'employee' = 'admin';
 
-  // Add toast notification
   const addToast = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, type, message }]);
     
-    // Auto-remove after 4 seconds
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 4000);
@@ -43,6 +43,20 @@ function App() {
 
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Show toast when filter results change
+  useEffect(() => {
+    if (!loading && employees.length !== allEmployees.length && employees.length !== previousFilteredCount) {
+      const resultText = employees.length === 1 ? 'result' : 'results';
+      addToast('info', `🔍 Found ${employees.length} ${resultText}`);
+      setPreviousFilteredCount(employees.length);
+    }
+  }, [employees.length, allEmployees.length, loading, previousFilteredCount]);
+
+  const handleFilterChange = (filters: any) => {
+    updateFilters(filters);
+    setCurrentPage(1);
   };
 
   const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,9 +97,13 @@ function App() {
     }
   };
 
+  const recordsPerPage = 100;
+  const startIndex = (currentPage - 1) * recordsPerPage;
+  const endIndex = Math.min(startIndex + recordsPerPage, employees.length);
+  const displayingCount = employees.length === 0 ? 0 : endIndex - startIndex;
+
   return (
     <div className="app">
-      {/* Header */}
       <header className="app-header">
         <div className="header-left">
           <div className="app-logo">📊</div>
@@ -112,9 +130,7 @@ function App() {
         )}
       </header>
 
-      {/* Main Content */}
       <main className="app-main">
-        {/* Stats Bar */}
         <div className="stats-bar">
           <div className="stat-item">
             <span className="stat-label">Total Employees</span>
@@ -122,7 +138,7 @@ function App() {
           </div>
           <div className="stat-item">
             <span className="stat-label">Displaying</span>
-            <span className="stat-value">{employees.length}</span>
+            <span className="stat-value">{displayingCount}</span>
           </div>
           <div className="stat-item">
             <span className="stat-label">Active</span>
@@ -134,10 +150,11 @@ function App() {
           </div>
         </div>
 
-        {/* Filters */}
-        <EmployeeFilters onFilterChange={updateFilters} employees={allEmployees} />
+        <EmployeeFilters 
+          onFilterChange={handleFilterChange}
+          employees={allEmployees} 
+        />
 
-        {/* Error */}
         {error && (
           <div className="error-box">
             <span>⚠️ {error}</span>
@@ -145,7 +162,6 @@ function App() {
           </div>
         )}
 
-        {/* Loading State */}
         {loading && (
           <div className="loading-container">
             <div className="spinner"></div>
@@ -153,30 +169,22 @@ function App() {
           </div>
         )}
 
-        {/* Table */}
         {!loading && (
           <div className="table-container">
-            {employees.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">🔭</div>
-                <h3>No Employees Found</h3>
-                <p>Try adjusting your filters or import an Excel file to get started.</p>
-              </div>
-            ) : (
-              <EmployeeTable
-                employees={employees}
-                userRole={userRole}
-                onRowClick={(id) => {
-                  fetchEmployeeById(id);
-                  addToast('info', '👁️ Loading employee details...');
-                }}
-              />
-            )}
+            <EmployeeTable
+              employees={employees}
+              userRole={userRole}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+              onRowClick={(id) => {
+                fetchEmployeeById(id);
+                addToast('info', '👁️ Loading employee details...');
+              }}
+            />
           </div>
         )}
       </main>
 
-      {/* Detail Modal */}
       {selectedEmployee && (
         <EmployeeDetailModal
           employee={selectedEmployee}
@@ -187,7 +195,6 @@ function App() {
         />
       )}
 
-      {/* Toast Notifications */}
       <div className="toast-container">
         {toasts.map(toast => (
           <div key={toast.id} className={`toast toast-${toast.type}`}>
@@ -203,7 +210,6 @@ function App() {
         ))}
       </div>
 
-      {/* Footer */}
       <footer className="app-footer">
         <p>© 2024 Masterdata Dashboard • Built with React & PostgreSQL</p>
       </footer>
