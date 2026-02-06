@@ -137,42 +137,68 @@ export class EmployeeModel {
 
   async update(empcode: string, data: Partial<Employee>): Promise<Employee> {
     try {
+      // Build dynamic UPDATE query to handle null values properly
+      const updates: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+
+      // Helper to add field updates
+      const addUpdate = (field: string, dbColumn: string, value: any) => {
+        if (value !== undefined) {
+          updates.push(`${dbColumn} = $${paramCount}`);
+          values.push(value === '' ? null : value); // Convert empty string to null
+          paramCount++;
+        }
+      };
+
+      // Add all fields that can be updated
+      addUpdate('firstName', 'first_name', data.firstName);
+      addUpdate('middleName', 'middle_name', data.middleName);
+      addUpdate('lastName', 'last_name', data.lastName);
+      addUpdate('fullName', 'full_name', data.fullName);
+      addUpdate('cbeNoncbe', 'cbe_noncbe', data.cbeNoncbe);
+      addUpdate('rank', 'rank', data.rank);
+      addUpdate('empStatus', 'emp_status', data.empStatus);
+      addUpdate('position', 'position', data.position);
+      addUpdate('costcode', 'costcode', data.costcode);
+      addUpdate('projName', 'proj_name', data.projName);
+      addUpdate('projHr', 'proj_hr', data.projHr);
+      addUpdate('emailAddress', 'email_address', data.emailAddress);
+      addUpdate('mobileAssignment', 'mobile_assignment', data.mobileAssignment);
+      addUpdate('mobileNumber', 'mobile_number', data.mobileNumber);
+      addUpdate('laptopAssignment', 'laptop_assignment', data.laptopAssignment);
+      addUpdate('assetCode', 'asset_code', data.assetCode);
+      addUpdate('others', 'others', data.others);
+      addUpdate('remarks', 'remarks', data.remarks);
+      addUpdate('status', 'status', data.status);
+
+      // Always update updated_at
+      updates.push('updated_at = CURRENT_TIMESTAMP');
+
+      // If no fields to update, return current employee
+      if (updates.length === 1) { // Only updated_at
+        return this.findById(empcode) as Promise<Employee>;
+      }
+
+      // Add empcode as last parameter
+      values.push(empcode);
+
       const query = `
         UPDATE employees SET
-          first_name = COALESCE($1, first_name),
-          middle_name = COALESCE($2, middle_name),
-          last_name = COALESCE($3, last_name),
-          full_name = COALESCE($4, full_name),
-          cbe_noncbe = COALESCE($5, cbe_noncbe),
-          rank = COALESCE($6, rank),
-          emp_status = COALESCE($7, emp_status),
-          position = COALESCE($8, position),
-          costcode = COALESCE($9, costcode),
-          proj_name = COALESCE($10, proj_name),
-          proj_hr = COALESCE($11, proj_hr),
-          email_address = COALESCE($12, email_address),
-          mobile_assignment = COALESCE($13, mobile_assignment),
-          mobile_number = COALESCE($14, mobile_number),
-          laptop_assignment = COALESCE($15, laptop_assignment),
-          asset_code = COALESCE($16, asset_code),
-          others = COALESCE($17, others),
-          remarks = COALESCE($18, remarks),
-          status = COALESCE($19, status),
-          updated_at = CURRENT_TIMESTAMP
-        WHERE empcode = $20
+          ${updates.join(', ')}
+        WHERE empcode = $${paramCount}
         RETURNING *
       `;
-      const values = [
-        data.firstName, data.middleName, data.lastName, data.fullName,
-        data.cbeNoncbe, data.rank, data.empStatus, data.position,
-        data.costcode, data.projName, data.projHr, data.emailAddress,
-        data.mobileAssignment, data.mobileNumber, data.laptopAssignment,
-        data.assetCode, data.others, data.remarks, data.status, empcode
-      ];
+
+      console.log('🔄 Update query:', query);
+      console.log('📝 Update values:', values);
+
       const result = await pool.query(query, values);
+      
       if (result.rows.length === 0) {
         throw new Error('Employee not found');
       }
+      
       return this.mapRowToEmployee(result.rows[0]);
     } catch (error: any) {
       console.error('❌ Error in update:', error);

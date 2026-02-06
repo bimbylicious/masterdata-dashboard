@@ -72,24 +72,26 @@ export const EmployeeDetailModal: React.FC<Props> = ({
       const updatedData: Partial<Employee> = {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        middleName: formData.middleName || undefined,
+        middleName: formData.middleName || '', // Send empty string to clear
         fullName: fullName,
-        cbeNoncbe: formData.cbeNoncbe || undefined,
+        cbeNoncbe: formData.cbeNoncbe || '', // Send empty string to clear
         rank: formData.rank,
         empStatus: formData.empStatus,
         position: formData.position,
-        costcode: formData.costcode || undefined,
+        costcode: formData.costcode || '', // Send empty string to clear
         projName: formData.projName,
-        projHr: formData.projHr || undefined,
-        emailAddress: formData.emailAddress || undefined,
-        mobileAssignment: formData.mobileAssignment || undefined,
-        mobileNumber: formData.mobileNumber || undefined,
-        laptopAssignment: formData.laptopAssignment || undefined,
-        assetCode: formData.assetCode || undefined,
-        others: formData.others || undefined,
-        remarks: formData.remarks || undefined,
+        projHr: formData.projHr || '', // Send empty string to clear
+        emailAddress: formData.emailAddress || '', // Send empty string to clear
+        mobileAssignment: formData.mobileAssignment || '', // Send empty string to clear
+        mobileNumber: formData.mobileNumber || '', // Send empty string to clear
+        laptopAssignment: formData.laptopAssignment || '', // Send empty string to clear
+        assetCode: formData.assetCode || '', // Send empty string to clear
+        others: formData.others || '', // Send empty string to clear
+        remarks: formData.remarks || '', // Send empty string to clear
         status: formData.status as 'active' | 'inactive'
       };
+
+      console.log('💾 Saving employee data:', updatedData);
 
       const updatedEmployee = await service.updateEmployee(employee.empcode, updatedData);
       setIsEditing(false);
@@ -218,7 +220,7 @@ export const EmployeeDetailModal: React.FC<Props> = ({
                 <div className="form-row">
                   <div className="form-group">
                     <label>Middle Name</label>
-                    <input type="text" name="middleName" value={formData.middleName} onChange={handleInputChange} disabled={isLoading} />
+                    <input type="text" name="middleName" value={formData.middleName} onChange={handleInputChange} disabled={isLoading} placeholder="Leave blank to clear" />
                   </div>
                   <div className="form-group">
                     <label>CBE/NonCBE</label>
@@ -254,7 +256,7 @@ export const EmployeeDetailModal: React.FC<Props> = ({
                   </div>
                   <div className="form-group">
                     <label>Cost Code</label>
-                    <input type="text" name="costcode" value={formData.costcode} onChange={handleInputChange} disabled={isLoading} />
+                    <input type="text" name="costcode" value={formData.costcode} onChange={handleInputChange} disabled={isLoading} placeholder="Leave blank to clear" />
                   </div>
                 </div>
 
@@ -268,47 +270,61 @@ export const EmployeeDetailModal: React.FC<Props> = ({
                 <div className="form-row">
                   <div className="form-group">
                     <label>Project HR</label>
-                    <input type="text" name="projHr" value={formData.projHr} onChange={handleInputChange} disabled={isLoading} />
+                    <input type="text" name="projHr" value={formData.projHr} onChange={handleInputChange} disabled={isLoading} placeholder="Leave blank to clear" />
                   </div>
                   <div className="form-group">
                     <label>Email Address</label>
-                    <input type="email" name="emailAddress" value={formData.emailAddress} onChange={handleInputChange} disabled={isLoading} />
+                    <input type="email" name="emailAddress" value={formData.emailAddress} onChange={handleInputChange} disabled={isLoading} placeholder="Leave blank to clear" />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label>Mobile Assignment</label>
-                    <input type="text" name="mobileAssignment" value={formData.mobileAssignment} onChange={handleInputChange} disabled={isLoading} />
+                    <input type="text" name="mobileAssignment" value={formData.mobileAssignment} onChange={handleInputChange} disabled={isLoading} placeholder="Leave blank to clear" />
                   </div>
                   <div className="form-group">
                     <label>Mobile Number</label>
-                    <input type="text" name="mobileNumber" value={formData.mobileNumber} onChange={handleInputChange} disabled={isLoading} />
+                    <input type="text" name="mobileNumber" value={formData.mobileNumber} onChange={handleInputChange} disabled={isLoading} placeholder="Leave blank to clear" />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label>Laptop Assignment</label>
-                    <input type="text" name="laptopAssignment" value={formData.laptopAssignment} onChange={handleInputChange} disabled={isLoading} />
+                    <input type="text" name="laptopAssignment" value={formData.laptopAssignment} onChange={handleInputChange} disabled={isLoading} placeholder="Leave blank to clear" />
                   </div>
                   <div className="form-group">
                     <label>Asset Code</label>
-                    <input type="text" name="assetCode" value={formData.assetCode} onChange={handleInputChange} disabled={isLoading} />
+                    <input type="text" name="assetCode" value={formData.assetCode} onChange={handleInputChange} disabled={isLoading} placeholder="Leave blank to clear" />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group" style={{gridColumn: '1 / -1'}}>
                     <label>Others (Specify items assigned)</label>
-                    <textarea name="others" value={formData.others} onChange={handleInputChange} disabled={isLoading} rows={2} />
+                    <textarea 
+                      name="others" 
+                      value={formData.others} 
+                      onChange={handleInputChange} 
+                      disabled={isLoading} 
+                      rows={2}
+                      placeholder="Leave blank to clear"
+                    />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group" style={{gridColumn: '1 / -1'}}>
                     <label>Remarks</label>
-                    <textarea name="remarks" value={formData.remarks} onChange={handleInputChange} disabled={isLoading} rows={2} />
+                    <textarea 
+                      name="remarks" 
+                      value={formData.remarks} 
+                      onChange={handleInputChange} 
+                      disabled={isLoading} 
+                      rows={2}
+                      placeholder="Leave blank to clear"
+                    />
                   </div>
                 </div>
 
